@@ -59,6 +59,33 @@ def inject_custom_css():
             font-size: 1.1rem !important;
             line-height: 1.6;
         }
+        .page-number {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            margin: 0 0.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #f0f2f6;
+            color: #4a5568;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .page-number:hover {
+            background-color: #e2e8f0;
+        }
+        .page-number.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .page-nav {
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+        .page-spacer {
+            display: inline-block;
+            padding: 0 0.5rem;
+            color: #9ca3af;
+        }
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
@@ -350,6 +377,69 @@ def safe_show_image(image_path, width=80, caption="平台图标", default_path="
         if os.path.exists(default_path):
             st.image(default_path, width=width, caption="未知平台", use_column_width=False)
 
+# 数字分页导航
+def show_numeric_pagination(current_page, total_pages, max_visible=7):
+    if total_pages <= 1:
+        return
+    
+    st.markdown("<div class='page-nav'>", unsafe_allow_html=True)
+    
+    # 计算起始页和结束页，确保当前页在中间位置
+    start_page = max(1, current_page - (max_visible // 2))
+    end_page = min(total_pages, start_page + max_visible - 1)
+    
+    # 如果结束页超出范围，调整起始页
+    if end_page - start_page < max_visible - 1:
+        start_page = max(1, end_page - max_visible + 1)
+    
+    # 首页按钮
+    if start_page > 1:
+        if st.button("首页", key="first_page", help="返回第一页"):
+            st.session_state.current_page = 1
+            st.rerun()
+    
+    # 上一页按钮（只有当不是第一页时显示）
+    if current_page > 1:
+        if st.button("上一页", key="prev_page", help="查看前一页"):
+            st.session_state.current_page = current_page - 1
+            st.rerun()
+    
+    # 数字页码按钮
+    for page in range(start_page, end_page + 1):
+        # 创建一个唯一的键值
+        button_key = f"page_{page}"
+        
+        # 为当前页添加特殊样式
+        if page == current_page:
+            st.markdown(
+                f"<span class='page-number active' style='cursor: default;'>{page}</span>",
+                unsafe_allow_html=True
+            )
+        else:
+            if st.button(str(page), key=button_key, help=f"跳转到第 {page} 页"):
+                st.session_state.current_page = page
+                st.rerun()
+    
+    # 下一页按钮（只有当不是最后一页时显示）
+    if current_page < total_pages:
+        if st.button("下一页", key="next_page", help="查看下一页"):
+            st.session_state.current_page = current_page + 1
+            st.rerun()
+    
+    # 末页按钮
+    if end_page < total_pages:
+        if st.button("末页", key="last_page", help="跳转到最后一页"):
+            st.session_state.current_page = total_pages
+            st.rerun()
+    
+    # 显示当前页码和总页数
+    st.markdown(
+        f"<span class='page-spacer'>第 {current_page} 页 / 共 {total_pages} 页</span>",
+        unsafe_allow_html=True
+    )
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
 # 主流程
 def main():
     inject_custom_css()  # 注入自定义样式
@@ -434,7 +524,7 @@ def main():
             
             st.write(f"为您推荐的小说（共 {len(recommendations)} 本）：")
             
-            # 显示书籍卡片（增加文字大小）
+            # 显示书籍卡片
             for book in current_books:
                 with st.container():
                     col1, col2 = st.columns([1, 4], gap="medium")
@@ -456,28 +546,9 @@ def main():
                     
                     st.markdown("---")
             
-            # 分页控制
+            # 数字分页导航
             total_pages = (len(recommendations) + books_per_page - 1) // books_per_page
-            if total_pages > 1:
-                st.markdown("<div class='page-nav'>", unsafe_allow_html=True)
-                
-                if st.session_state.current_page > 1:
-                    if st.button("上一页", key="prev_page", 
-                              help="查看前一页推荐的小说", 
-                              disabled=st.session_state.current_page <= 1):
-                        st.session_state.current_page -= 1
-                        st.rerun()
-                
-                st.markdown(f"<span style='margin: 0 1rem;'>第 {st.session_state.current_page} 页 / 共 {total_pages} 页</span>", unsafe_allow_html=True)
-                
-                if st.session_state.current_page < total_pages:
-                    if st.button("下一页", key="next_page", 
-                              help="查看下一页推荐的小说",
-                              disabled=st.session_state.current_page >= total_pages):
-                        st.session_state.current_page += 1
-                        st.rerun()
-                
-                st.markdown("</div>", unsafe_allow_html=True)
+            show_numeric_pagination(st.session_state.current_page, total_pages)
             
             # 进入下一步
             if st.button("前往满意度评价", type="primary",
