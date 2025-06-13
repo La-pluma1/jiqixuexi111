@@ -329,6 +329,27 @@ def show_step_nav(current_step):
                     unsafe_allow_html=True
                 )
 
+# 安全显示图像的函数
+def safe_show_image(image_path, width=80, caption="平台图标", default_path="logos/default_logo.png"):
+    try:
+        # 检查图像路径是否存在
+        if os.path.exists(image_path):
+            # 尝试显示图像
+            st.image(image_path, width=width, caption=caption, use_column_width=False)
+        else:
+            # 如果图像不存在，显示默认图标
+            if os.path.exists(default_path):
+                st.image(default_path, width=width, caption="未知平台", use_column_width=False)
+            else:
+                # 如果默认图标也不存在，显示文本替代
+                st.write("图标加载失败")
+    except Exception as e:
+        # 捕获任何可能的异常并显示错误信息
+        st.write(f"图标加载出错: {e}")
+        # 尝试显示默认图标作为备选
+        if os.path.exists(default_path):
+            st.image(default_path, width=width, caption="未知平台", use_column_width=False)
+
 # 主流程
 def main():
     inject_custom_css()  # 注入自定义样式
@@ -418,13 +439,13 @@ def main():
                 with st.container():
                     col1, col2 = st.columns([1, 4], gap="medium")
                     with col1:
-                        # 替换 use_column_width 为 use_container_width
-                        if os.path.exists(book['platform_icon']):
-                            st.image(book['platform_icon'], width=80, 
-                                   caption=book['platform'], use_container_width=False)
-                        else:
-                            st.image("logos/default_logo.png", width=80, 
-                                   caption="未知平台", use_container_width=False)
+                        # 使用安全显示图像的函数
+                        safe_show_image(
+                            book['platform_icon'], 
+                            width=80, 
+                            caption=book['platform'],
+                            default_path="logos/default_logo.png"
+                        )
                     
                     with col2:
                         st.markdown(f"<h3 class='book-title'>《{book['title']}》</h3>", unsafe_allow_html=True)
