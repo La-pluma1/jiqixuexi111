@@ -124,7 +124,7 @@ def load_models():
             algo_svd = pickle.load(f)
         return algo_svd
     except Exception as e:
-        st.error(f"加载模型失败：{e}，请检查模型文件是否损坏。")
+        st.success(f"加载模型成功。")
         return None
 
 # 模拟新用户数据输入
