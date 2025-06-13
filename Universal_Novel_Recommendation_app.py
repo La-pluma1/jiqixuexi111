@@ -377,7 +377,7 @@ def safe_show_image(image_path, width=80, caption="平台图标", default_path="
         if os.path.exists(default_path):
             st.image(default_path, width=width, caption="未知平台", use_column_width=False)
 
-# 数字分页导航
+# 数字分页导航（仅保留数字按钮）
 def show_numeric_pagination(current_page, total_pages, max_visible=7):
     if total_pages <= 1:
         return
@@ -392,17 +392,12 @@ def show_numeric_pagination(current_page, total_pages, max_visible=7):
     if end_page - start_page < max_visible - 1:
         start_page = max(1, end_page - max_visible + 1)
     
-    # 首页按钮
+    # 添加省略号（当有更多页时）
     if start_page > 1:
-        if st.button("首页", key="first_page", help="返回第一页"):
+        if st.button("1", key="first_page_btn", help="跳转到第1页"):
             st.session_state.current_page = 1
             st.rerun()
-    
-    # 上一页按钮（只有当不是第一页时显示）
-    if current_page > 1:
-        if st.button("上一页", key="prev_page", help="查看前一页"):
-            st.session_state.current_page = current_page - 1
-            st.rerun()
+        st.markdown("<span class='page-spacer'>...</span>", unsafe_allow_html=True)
     
     # 数字页码按钮
     for page in range(start_page, end_page + 1):
@@ -420,15 +415,10 @@ def show_numeric_pagination(current_page, total_pages, max_visible=7):
                 st.session_state.current_page = page
                 st.rerun()
     
-    # 下一页按钮（只有当不是最后一页时显示）
-    if current_page < total_pages:
-        if st.button("下一页", key="next_page", help="查看下一页"):
-            st.session_state.current_page = current_page + 1
-            st.rerun()
-    
-    # 末页按钮
+    # 添加省略号（当有更多页时）
     if end_page < total_pages:
-        if st.button("末页", key="last_page", help="跳转到最后一页"):
+        st.markdown("<span class='page-spacer'>...</span>", unsafe_allow_html=True)
+        if st.button(str(total_pages), key="last_page_btn", help=f"跳转到最后一页 ({total_pages})"):
             st.session_state.current_page = total_pages
             st.rerun()
     
@@ -546,7 +536,7 @@ def main():
                     
                     st.markdown("---")
             
-            # 数字分页导航
+            # 数字分页导航（仅保留数字按钮）
             total_pages = (len(recommendations) + books_per_page - 1) // books_per_page
             show_numeric_pagination(st.session_state.current_page, total_pages)
             
